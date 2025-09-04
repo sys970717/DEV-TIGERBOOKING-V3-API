@@ -1,0 +1,7 @@
+﻿services:
+  data:
+    image: data
+    build:
+      context: .
+      dockerfile: Data/Dockerfile
+

@@ -1,0 +1,11 @@
+C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Domain\bin\Debug\net8.0\TigerBooking.Domain.deps.json
+C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Domain\bin\Debug\net8.0\TigerBooking.Domain.dll
+C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Domain\bin\Debug\net8.0\TigerBooking.Domain.pdb
+C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Domain\obj\Debug\net8.0\TigerBooking.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Domain\obj\Debug\net8.0\TigerBooking.Domain.AssemblyInfoInputs.cache
+C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Domain\obj\Debug\net8.0\TigerBooking.Domain.AssemblyInfo.cs
+C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Domain\obj\Debug\net8.0\TigerBooking.Domain.csproj.CoreCompileInputs.cache
+C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Domain\obj\Debug\net8.0\TigerBooking.Domain.dll
+C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Domain\obj\Debug\net8.0\refint\TigerBooking.Domain.dll
+C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Domain\obj\Debug\net8.0\TigerBooking.Domain.pdb
+C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Domain\obj\Debug\net8.0\ref\TigerBooking.Domain.dll
