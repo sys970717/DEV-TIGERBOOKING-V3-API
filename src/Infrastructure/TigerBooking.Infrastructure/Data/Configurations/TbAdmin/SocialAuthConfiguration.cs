@@ -20,58 +20,20 @@ public class SocialAuthConfiguration : IEntityTypeConfiguration<SocialAuth>
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
 
-        // 소셜 공급자
-        builder.Property(e => e.Provider)
-            .HasColumnName("provider")
-            .HasMaxLength(50)
-            .IsRequired();
+        // 최소 컬럼 매핑(snake_case)
+        builder.Property(e => e.Provider).HasColumnName("provider");
+        builder.Property(e => e.ProviderUserId).HasColumnName("provider_user_id");
+        builder.Property(e => e.ProviderEmail).HasColumnName("provider_email");
+        builder.Property(e => e.ProviderToken).HasColumnName("provider_token");
 
-        // 공급자 내 사용자 ID
-        builder.Property(e => e.ProviderUserId)
-            .HasColumnName("provider_user_id")
-            .HasMaxLength(200)
-            .IsRequired();
-
-        // 공급자 이메일 (암호화 저장 가능)
-        builder.Property(e => e.ProviderEmail)
-            .HasColumnName("provider_email")
-            .HasMaxLength(500);
-
-        // 공급자 토큰 (민감 정보, 암호화 권장)
-        builder.Property(e => e.ProviderToken)
-            .HasColumnName("provider_token")
-            .HasMaxLength(2000);
-
-        // BaseEntity 필드들
-        builder.Property(e => e.CreatedTz)
-            .HasColumnName("created_at")
-            .IsRequired();
-
-        builder.Property(e => e.UpdatedTz)
-            .HasColumnName("updated_tz")
-            .IsRequired();
-
-        builder.Property(e => e.CreatedBy)
-            .HasColumnName("created_by")
-            .HasMaxLength(100)
-            .IsRequired();
-
-        builder.Property(e => e.UpdatedBy)
-            .HasColumnName("updated_by")
-            .HasMaxLength(100)
-            .IsRequired();
-
-        builder.Property(e => e.IsDeleted)
-            .HasColumnName("is_deleted")
-            .HasDefaultValue(false)
-            .IsRequired();
-
-        builder.Property(x => x.DeletedTz)
-            .HasColumnName("deleted_tz");
-
-        builder.Property(x => x.DeletedBy)
-            .HasColumnName("deleted_by")
-            .HasMaxLength(100);
+        // BaseEntity 공통 컬럼 명시 매핑
+        builder.Property(e => e.CreatedTz).HasColumnName("created_tz");
+        builder.Property(e => e.UpdatedTz).HasColumnName("updated_tz");
+        builder.Property(e => e.CreatedBy).HasColumnName("created_by");
+        builder.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+        builder.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        builder.Property(e => e.DeletedTz).HasColumnName("deleted_tz");
+        builder.Property(e => e.DeletedBy).HasColumnName("deleted_by");
 
         // 유일성 제약조건: (provider, provider_user_id)는 소프트삭제 제외 전역 유일
         builder.HasIndex(e => new { e.Provider, e.ProviderUserId })
