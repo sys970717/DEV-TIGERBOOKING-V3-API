@@ -57,7 +57,7 @@ public class BaseRepository<T, TContext> : IRepository<T>
         if (entity != null)
         {
             entity.IsDeleted = true;
-            entity.DeletedAt = DateTime.UtcNow;
+            entity.DeletedTz = DateTime.UtcNow;
             // TODO: DeletedBy는 현재 사용자 정보로 설정
             entity.DeletedBy = "system"; // 임시값
         }

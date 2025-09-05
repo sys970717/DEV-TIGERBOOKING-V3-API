@@ -169,8 +169,8 @@ public class GdsV3UserService : IGdsV3UserService
             PhoneNumber = user.PhoneNumber,
             LastLoginAt = user.LastLoginAt,
             LoginAttempts = user.LoginAttempts,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt,
+            CreatedAt = user.CreatedTz,
+            UpdatedAt = user.UpdatedTz,
             CreatedBy = user.CreatedBy,
             UpdatedBy = user.UpdatedBy
         };

@@ -118,9 +118,9 @@ public class ChannelRepository : IChannelRepository
         if (channel != null)
         {
             channel.IsDeleted = true;
-            channel.DeletedAt = DateTime.UtcNow;
+            channel.DeletedTz = DateTime.UtcNow;
             channel.DeletedBy = deletedBy;
-            channel.UpdatedAt = DateTime.UtcNow;
+            channel.UpdatedTz = DateTime.UtcNow;
             channel.UpdatedBy = deletedBy;
 
             await _context.SaveChangesAsync(cancellationToken);

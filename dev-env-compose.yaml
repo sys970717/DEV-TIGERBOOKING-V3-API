@@ -1,0 +1,49 @@
+﻿version: "3.8"
+
+services:
+  dev-postgres:
+    image: postgres:latest
+    container_name: dev-postgres
+    ports:
+      - "55432:5432"
+    environment:
+      POSTGRES_USER: toy_user
+      POSTGRES_PASSWORD: qwer1234
+      POSTGRES_DB: test_toy
+    volumes:
+      - ../data/dev-postgres/data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "toy_user", "-d", "test_toy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    ports:
+      - "58888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: test@test.io
+      PGADMIN_DEFAULT_PASSWORD: qwer1234
+    restart: always
+    
+   nginx:
+    image: nginx:alpine
+    container_name: dev-nginx
+    restart: unless-stopped
+    ports:
+      - "48080:80"  # External port 58080 -> Internal port 80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      
+  redis:
+    image: redis:latest
+    container_name: dev-redis
+    restart: unless-stopped
+    ports:
+      - "56379:6379"  # External port 56379 -> Internal port 6379
+    volumes:
+      - ./redis/data:/data
+      - ./redis/conf/redis.conf:/usr/local/conf/redis.conf

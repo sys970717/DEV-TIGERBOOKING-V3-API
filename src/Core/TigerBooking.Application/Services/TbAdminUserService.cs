@@ -142,8 +142,8 @@ public class TbAdminUserService : ITbAdminUserService
             IsActive = user.IsActive,
             Role = user.Role,
             Department = user.Department,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt,
+            CreatedAt = user.CreatedTz,
+            UpdatedAt = user.UpdatedTz,
             CreatedBy = user.CreatedBy,
             UpdatedBy = user.UpdatedBy
         };

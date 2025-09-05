@@ -17,3 +17,4 @@ C:\Users\ys.seo\work\TigerBooking\src\Infrastructure\TigerBooking.Infrastructure
 C:\Users\ys.seo\work\TigerBooking\src\Infrastructure\TigerBooking.Infrastructure\obj\Debug\net8.0\TigerBooking.Infrastructure.pdb
 C:\Users\ys.seo\work\TigerBooking\src\Infrastructure\TigerBooking.Infrastructure\obj\Debug\net8.0\TigerBooking.Infrastructure.genruntimeconfig.cache
 C:\Users\ys.seo\work\TigerBooking\src\Infrastructure\TigerBooking.Infrastructure\obj\Debug\net8.0\ref\TigerBooking.Infrastructure.dll
+C:\Users\ys.seo\work\TigerBooking\src\Infrastructure\TigerBooking.Infrastructure\obj\Debug\net8.0\TigerBooking.Infrastructure.sourcelink.json

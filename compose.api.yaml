@@ -1,0 +1,24 @@
+﻿services:
+  tigerbooking-api:
+    image: tigerbooking-api:loc-latest
+    build:
+      context: .
+      dockerfile: src/Presentation/TigerBooking.Api/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=loc-docker
+      - ASPNETCORE_URLS=http://0.0.0.0:58081
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+    networks:
+      - dev-postgres_default
+    restart: unless-stopped
+    # nginx가 같은 네트워크에서 프록시하므로 포트 바인딩은 생략합니다.
+    # 필요 시 테스트 용도로 열 수 있습니다.
+    # ports:
+    #   - "58081:58081"
+
+networks:
+  dev-postgres_default:
+    external: true
+
+volumes:
+  node_modules:

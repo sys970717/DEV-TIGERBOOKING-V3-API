@@ -63,25 +63,7 @@ public class Channel : BaseEntity
     /// </summary>
     public virtual ICollection<Channel> SubChannels { get; set; } = new List<Channel>();
 
-    // BaseEntity의 필드들을 DB 컬럼에 맞게 매핑
-    [Column("created_tz")]
-    public new DateTime CreatedAt { get; set; }
-
-    [Column("updated_tz")]
-    public new DateTime UpdatedAt { get; set; }
-
-    [Column("created_by")]
-    public new string CreatedBy { get; set; } = string.Empty;
-
-    [Column("updated_by")]
-    public new string UpdatedBy { get; set; } = string.Empty;
 
     [Column("is_deleted")]
     public new bool IsDeleted { get; set; }
-
-    [Column("deleted_tz")]
-    public new DateTime? DeletedAt { get; set; }
-
-    [Column("deleted_by")]
-    public new string? DeletedBy { get; set; }
 }

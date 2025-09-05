@@ -103,29 +103,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(e => e.LockedUntilTz)
             .HasColumnName("locked_until_tz");
 
-        // BaseEntity 필드들
-        builder.Property(e => e.CreatedAt)
-            .HasColumnName("created_at")
-            .IsRequired();
-
-        builder.Property(e => e.UpdatedAt)
-            .HasColumnName("updated_at")
-            .IsRequired();
-
-        builder.Property(e => e.CreatedBy)
-            .HasColumnName("created_by")
-            .HasMaxLength(100)
-            .IsRequired();
-
-        builder.Property(e => e.UpdatedBy)
-            .HasColumnName("updated_by")
-            .HasMaxLength(100)
-            .IsRequired();
-
-        builder.Property(e => e.IsDeleted)
-            .HasColumnName("is_deleted")
-            .HasDefaultValue(false)
-            .IsRequired();
+        // BaseEntity 필드들은 BaseDbContext에서 공통으로 처리하므로 여기서 제거
 
         // 유일성 제약조건: 같은 채널에서 이메일 중복 금지 (소프트삭제 제외)
         builder.HasIndex(e => new { e.ChannelId, e.Email })

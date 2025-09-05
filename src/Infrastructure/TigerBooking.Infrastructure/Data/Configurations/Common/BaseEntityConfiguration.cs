@@ -22,17 +22,17 @@ public abstract class BaseEntityConfiguration<TEntity> : IEntityTypeConfiguratio
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
             
-        builder.Property(e => e.CreatedAt)
-            .HasColumnName("created_at")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        builder.Property(e => e.CreatedTz)
+            .HasColumnName("created_tz")
+            .HasDefaultValueSql("TIMEZONE('UTC', CURRENT_TIMESTAMP)");
             
-        builder.Property(e => e.UpdatedAt)
-            .HasColumnName("updated_at")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        builder.Property(e => e.UpdatedTz)
+            .HasColumnName("updated_tz")
+            .HasDefaultValueSql("TIMEZONE('UTC', CURRENT_TIMESTAMP)");
             
         builder.Property(e => e.CreatedBy)
             .HasColumnName("created_by")
-            .HasMaxLength(50);
+            .HasMaxLength(100);
             
         builder.Property(e => e.UpdatedBy)
             .HasColumnName("updated_by")
@@ -42,11 +42,11 @@ public abstract class BaseEntityConfiguration<TEntity> : IEntityTypeConfiguratio
             .HasColumnName("is_deleted")
             .HasDefaultValue(false);
             
-        builder.Property(e => e.DeletedAt)
-            .HasColumnName("deleted_at");
+        builder.Property(e => e.DeletedTz)
+            .HasColumnName("deleted_tz");
             
         builder.Property(e => e.DeletedBy)
             .HasColumnName("deleted_by")
-            .HasMaxLength(50);
+            .HasMaxLength(100);
     }
 }

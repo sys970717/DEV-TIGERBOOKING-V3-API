@@ -67,8 +67,8 @@ public class ChannelService : IChannelService
             ContractDate = request.ContractDate,
             Ratio = request.Ratio,
             SortOrder = request.SortOrder,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
+            CreatedTz = DateTime.UtcNow,
+            UpdatedTz = DateTime.UtcNow,
             CreatedBy = createdBy,
             UpdatedBy = createdBy,
             IsDeleted = false
@@ -92,7 +92,7 @@ public class ChannelService : IChannelService
         channel.ContractDate = request.ContractDate;
         channel.Ratio = request.Ratio;
         channel.SortOrder = request.SortOrder;
-        channel.UpdatedAt = DateTime.UtcNow;
+        channel.UpdatedTz = DateTime.UtcNow;
         channel.UpdatedBy = updatedBy;
 
         var updatedChannel = await _channelRepository.UpdateChannelAsync(channel, cancellationToken);
@@ -156,8 +156,8 @@ public class ChannelService : IChannelService
             ContractDate = channel.ContractDate,
             Ratio = channel.Ratio,
             SortOrder = channel.SortOrder,
-            CreatedAt = channel.CreatedAt,
-            UpdatedAt = channel.UpdatedAt,
+            CreatedAt = channel.CreatedTz,
+            UpdatedAt = channel.UpdatedTz,
             CreatedBy = channel.CreatedBy,
             UpdatedBy = channel.UpdatedBy
         };

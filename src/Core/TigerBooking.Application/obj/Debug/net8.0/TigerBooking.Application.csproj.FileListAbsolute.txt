@@ -13,3 +13,4 @@ C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Application\obj\Debug\ne
 C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Application\obj\Debug\net8.0\refint\TigerBooking.Application.dll
 C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Application\obj\Debug\net8.0\TigerBooking.Application.pdb
 C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Application\obj\Debug\net8.0\ref\TigerBooking.Application.dll
+C:\Users\ys.seo\work\TigerBooking\src\Core\TigerBooking.Application\obj\Debug\net8.0\TigerBooking.Application.sourcelink.json

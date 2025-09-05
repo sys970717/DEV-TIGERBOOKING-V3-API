@@ -43,12 +43,12 @@ public class SocialAuthConfiguration : IEntityTypeConfiguration<SocialAuth>
             .HasMaxLength(2000);
 
         // BaseEntity 필드들
-        builder.Property(e => e.CreatedAt)
+        builder.Property(e => e.CreatedTz)
             .HasColumnName("created_at")
             .IsRequired();
 
-        builder.Property(e => e.UpdatedAt)
-            .HasColumnName("updated_at")
+        builder.Property(e => e.UpdatedTz)
+            .HasColumnName("updated_tz")
             .IsRequired();
 
         builder.Property(e => e.CreatedBy)
@@ -65,6 +65,13 @@ public class SocialAuthConfiguration : IEntityTypeConfiguration<SocialAuth>
             .HasColumnName("is_deleted")
             .HasDefaultValue(false)
             .IsRequired();
+
+        builder.Property(x => x.DeletedTz)
+            .HasColumnName("deleted_tz");
+
+        builder.Property(x => x.DeletedBy)
+            .HasColumnName("deleted_by")
+            .HasMaxLength(100);
 
         // 유일성 제약조건: (provider, provider_user_id)는 소프트삭제 제외 전역 유일
         builder.HasIndex(e => new { e.Provider, e.ProviderUserId })

@@ -52,39 +52,11 @@ public class ChannelConfiguration : IEntityTypeConfiguration<Channel>
             .HasDefaultValue(0)
             .IsRequired();
 
-        builder.Property(x => x.CreatedAt)
-            .HasColumnName("created_tz")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
-            .IsRequired();
-
-        builder.Property(x => x.UpdatedAt)
-            .HasColumnName("updated_tz")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
-            .IsRequired();
-
-        builder.Property(x => x.CreatedBy)
-            .HasColumnName("created_by")
-            .HasMaxLength(100)
-            .HasDefaultValue("")
-            .IsRequired();
-
-        builder.Property(x => x.UpdatedBy)
-            .HasColumnName("updated_by")
-            .HasMaxLength(100)
-            .HasDefaultValue("")
-            .IsRequired();
-
         builder.Property(x => x.IsDeleted)
             .HasColumnName("is_deleted")
             .HasDefaultValue(false)
             .IsRequired();
-
-        builder.Property(x => x.DeletedAt)
-            .HasColumnName("deleted_tz");
-
-        builder.Property(x => x.DeletedBy)
-            .HasColumnName("deleted_by")
-            .HasMaxLength(100);
+        
 
         // Indexes and Constraints
         // 루트 채널 코드 유니크 (parent_channel_id IS NULL인 경우)
