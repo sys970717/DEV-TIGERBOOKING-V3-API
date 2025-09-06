@@ -42,7 +42,7 @@ jobs:
 
       - name: Send to Slack
         env:
-          SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/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"
+          SLACK_WEBHOOK_URL: ${{ secrets.COPILOT_SLACK_WEBHOOK_URL }}
         run: |
           curl -sS -X POST -H 'Content-type: application/json' \
             --data '${{ steps.payload.outputs.payload }}' \
