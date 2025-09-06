@@ -1,0 +1,49 @@
+name: Task Slack Notifier
+
+on:
+  repository_dispatch:
+    types: [copilot-task-start, copilot-task-end]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Slack payload
+        id: payload
+        run: |
+          TYPE="${{ github.event.action }}"
+          SUMMARY="${{ github.event.client_payload.summary }}"
+          if [ "$TYPE" = "copilot-task-start" ]; then
+            TITLE="Task Started"
+            HEADER="사용자 요청에 따른 작업을 시작했습니다. 아래 내용을 확인하세요."
+            COLOR="#3B82F6"
+          else
+            TITLE="Task Finished"
+            HEADER="사용자 요청에 따른 작업이 종료되었습니다. 아래 내용을 확인하세요."
+            COLOR="#22C55E"
+          fi
+
+          jq -n --arg title "$TITLE" --arg header "$HEADER" --arg color "$COLOR" --arg summary "$SUMMARY" '
+          {
+            "username":"TB-v3-api-copilot",
+            "icon_emoji":":tiger:",
+            "attachments":[
+              {"color":$color,"blocks":[
+                {"type":"section","text":{"type":"mrkdwn","text":"*\($title)*\n\($header)"}},
+                {"type":"divider"},
+                {"type":"section","fields":[
+                  {"type":"mrkdwn","text":"*프로젝트*\nDEV-TIGERBOOKING-V3-API"},
+                  {"type":"mrkdwn","text":"*작업자*\nTB-v3-api-copilot"},
+                  {"type":"mrkdwn","text":"*변경사항*\n\($summary)"}]}
+              ]}
+            ]
+          }' > slack.json
+          echo "payload=$(jq -c '.' slack.json)" >> $GITHUB_OUTPUT
+
+      - name: Send to Slack
+        env:
+          SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/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"
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data '${{ steps.payload.outputs.payload }}' \
+            "$SLACK_WEBHOOK_URL"

@@ -5,58 +5,40 @@
 - Timezone: Asia/Seoul (KST). Use ISO 8601 timestamps.
 
 ---
-## Action: Slack Webhook – Work Start & End
- **When:** At the **beginning of a Copilot-assigned task** and at the **end of that task**.  
-  (⚠️ Not when the application itself starts or stops.)
-- **Behavior:** 
-  - Do not prompt the user.
-  - Immediately send a Slack message to the configured webhook.
-- **Slack Webhook URL:** `https://hooks.slack.com/services/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`
-- **Channel:** `C09DV5N5Z6E`
-- **Username:** `TB-v3-api-copilot`
-- **Icon:** `:tiger:`
-- **Style:** Use Blocks/Card. Keep it short and clear.
+## Action: GitHub Action Slack Notification – Work Start & End
+- **When:**
+  - **Start:** When I (the user) ask a question or request that causes you (Copilot) to begin a task.
+    → Trigger the `copilot-task-start` GitHub Action.
+  - **End:** When the task triggered by my question/request has been fully completed.
+    → Trigger the `copilot-task-end` GitHub Action.
 
-### Payload Template (공통)
-```json
-{
-  "username": "TB-v3-api-copilot",
-  "icon_emoji": ":tiger:",
-  "channel": "C09DV5N5Z6E",
-  "attachments": [
-    {
-      "color": "{{COLOR}}",
-      "blocks": [
-        {
-          "type": "section",
-          "text": { "type": "mrkdwn", "text": "*{{TITLE}}*\n{{MESSAGE_HEADER}}" }
-        },
-        { "type": "divider" },
-        {
-          "type": "section",
-          "fields": [
-            { "type": "mrkdwn", "text": "*프로젝트*\nDEV-TIGERBOOKING-V3-API" },
-            { "type": "mrkdwn", "text": "*작업자*\nTB-v3-api-copilot" },
-            { "type": "mrkdwn", "text": "*변경사항*\n{{간단 요약}}" }
-          ]
-        }
-      ]
-    }
-  ]
-}
+**Behavior**:
+- At the start and end of a task, you must trigger the corresponding GitHub Action workflow to send a Slack notification.
+- The workflow is defined in `.github/workflows/task-slack.yml`.
+- It is triggered by a `repository_dispatch` event.
+
+**Implementation Details**:
+- To trigger the workflow, send a `POST` request to the GitHub API endpoint: `/repos/sys970717/DEV-TIGERBOOKING-V3-API/dispatches`.
+- You must use a GitHub token with `repo` scope for authentication. This token is available in the `GH_TOKEN` environment variable.
+- The request body must specify the `event_type` (`copilot-task-start` or `copilot-task-end`) and a `client_payload` containing a `summary` of the task.
+
+**Example `curl` command to trigger the start event:**
+```bash
+curl -L \
+  -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer $GH_TOKEN" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/repos/sys970717/DEV-TIGERBOOKING-V3-API/dispatches \
+  -d '{"event_type":"copilot-task-start","client_payload":{"summary":"Brief summary of the task."}}'
 ```
 
-### 매핑
-- **작업 시작(Start)**
-  - `TITLE`: `Work Start`
-  - `MESSAGE_HEADER`: `작업을 시작했습니다. 아래 내용을 확인하세요.`
-  - `COLOR`: `#3B82F6` (파랑)
+- The GitHub Action workflow is responsible for constructing and sending the actual Slack message. The information below is for reference about the workflow's behavior.
 
-- **작업 종료(End)**
-  - `TITLE`: `Work End`
-  - `MESSAGE_HEADER`: `작업이 종료되었습니다. 아래 내용을 확인하세요.`
-  - `COLOR`: `#22C55E` (초록)
-- **간단 요약**: 작업의 핵심 변경사항을 1-2문장으로 요약.
+**Channel:** `C09DV5N5Z6E`
+**Username:** `TB-v3-api-copilot`
+**Icon:** `:tiger:`
+
 ---
 
 

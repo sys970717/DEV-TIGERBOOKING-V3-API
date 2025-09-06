@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # send_slack.sh
+# Default webhook URL is read from SLACK_WEBHOOK_URL environment variable.
 # Usage:
 #   SLACK_WEBHOOK_URL="https://hooks.slack.com/services/XXX/YYY/ZZZ" ./scripts/send_slack.sh "Work Start" "작업을 시작했습니다. 아래 내용을 확인하세요." "#3B82F6" "간단 요약"
 
