@@ -21,6 +21,11 @@ public interface IUserService
     Task<LoginResponseDto> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Refresh token으로 새로운 토큰 발급
+    /// </summary>
+    Task<TokenResponseDto?> RefreshAsync(string refreshToken, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// 로그아웃
     /// Redis에서 토큰 무효화
     /// </summary>

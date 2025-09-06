@@ -23,4 +23,6 @@ public class RedisSettings
     
     public string TokenKeyPrefix { get; set; } = "tiger:token:";
     public string UserSessionPrefix { get; set; } = "tiger:session:";
+    // Use Redis or use in-memory implementation
+    public bool UseRedis { get; set; } = false;
 }

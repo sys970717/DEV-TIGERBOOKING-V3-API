@@ -30,6 +30,16 @@ public interface ITokenService
     /// Redis에서 토큰 상태를 확인합니다.
     /// </summary>
     Task<bool> IsTokenValidInRedisAsync(string jti, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Refresh token으로 새로운 Access/Refresh 토큰을 발급합니다 (토큰 회전).
+    /// </summary>
+    Task<TokenResponseDto?> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Refresh token을 무효화합니다.
+    /// </summary>
+    Task<bool> RevokeRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -40,4 +50,6 @@ public class TokenResponseDto
     public string AccessToken { get; set; } = string.Empty;
     public string Jti { get; set; } = string.Empty;
     public int ExpiresIn { get; set; }
+    public string? RefreshToken { get; set; }
+    public int RefreshExpiresIn { get; set; }
 }

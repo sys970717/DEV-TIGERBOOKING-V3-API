@@ -101,8 +101,10 @@
 
 1. 입력: `email`, `password`, `family_name`, `given_name` (선택: `gender`, `nickname`, `phone_*`, `nationality_code`)
 2. 정규화/검증: 이메일 정규화 후 **(channel\_id=1, email)** 중복 검사; 비밀번호 해시 생성; PII 암호화
-3. 저장: `channel_id=1`, `is_active=TRUE`, 감사 필드
-4. 응답: 가입 성공 (자동 로그인은 정책에 따라)
+3. 국가번호("phone_country_code")는 오직 숫자만 입력받고, 최대 3자리인지 확인해.
+4. 데이터를 저장할 때 국가번호 컬럼에 저장할 때에도 마찬가지로 숫자만 저장해. 
+5. 저장: `channel_id=1`, `is_active=TRUE`, 감사 필드
+6. 응답: 가입 성공 (자동 로그인은 정책에 따라)
 
 ### 6.2 로그인(LOCAL)
 
@@ -194,7 +196,7 @@
   "gender": "F",
   "nickname": "yuna_k",
   "phone_country_code": "+82",
-  "phone_number": "10-1234-5678",
+  "phone_number": "01012345678",
   "nationality_code": "KR",
   "point": "0.000000",
   "is_active": true

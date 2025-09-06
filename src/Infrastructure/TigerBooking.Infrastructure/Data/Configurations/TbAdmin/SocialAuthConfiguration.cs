@@ -40,5 +40,9 @@ public class SocialAuthConfiguration : IEntityTypeConfiguration<SocialAuth>
             .IsUnique()
             .HasFilter("is_deleted = false")
             .HasDatabaseName("uk_social_auth_provider_user");
+
+    // Navigation을 명시적으로 무시하여 EF Core가 User 쪽에 shadow FK(SocialAuthId)를 생성하지 않도록 함
+    // 애플리케이션 레벨에서 SocialAuthIdx를 통해 논리적 관계를 관리함(물리적 FK 미생성)
+    builder.Ignore(e => e.Users);
     }
 }

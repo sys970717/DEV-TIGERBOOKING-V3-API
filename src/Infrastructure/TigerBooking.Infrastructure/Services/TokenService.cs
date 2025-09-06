@@ -17,8 +17,7 @@ namespace TigerBooking.Infrastructure.Services;
 /// </summary>
 public class TokenService : ITokenService
 {
-    private readonly IConnectionMultiplexer _redis;
-    private readonly IDatabase _database;
+    private readonly TigerBooking.Infrastructure.Services.Redis.IRedisClient _redisClient;
     private readonly JwtSettings _jwtSettings;
     private readonly RedisSettings _redisSettings;
     private readonly ILogger<TokenService> _logger;
@@ -26,13 +25,12 @@ public class TokenService : ITokenService
     private readonly TokenValidationParameters _tokenValidationParameters;
 
     public TokenService(
-        IConnectionMultiplexer redis,
+        TigerBooking.Infrastructure.Services.Redis.IRedisClient redisClient,
         IOptions<JwtSettings> jwtSettings,
         IOptions<RedisSettings> redisSettings,
         ILogger<TokenService> logger)
     {
-        _redis = redis;
-        _database = redis.GetDatabase();
+        _redisClient = redisClient;
         _jwtSettings = jwtSettings.Value;
         _redisSettings = redisSettings.Value;
         _logger = logger;
@@ -78,10 +76,16 @@ public class TokenService : ITokenService
             signingCredentials: credentials
         );
 
-        var tokenString = _tokenHandler.WriteToken(token);
+    var tokenString = _tokenHandler.WriteToken(token);
 
-        // Redis에 허용 리스트로 토큰 등록
-        await RegisterTokenInRedisAsync(jti, userId, tokenExpiry, cancellationToken);
+    // Refresh token 생성
+    var refreshToken = Guid.NewGuid().ToString();
+    var refreshExpiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+
+    // Redis에 허용 리스트로 Access 토큰 등록
+    await RegisterTokenInRedisAsync(jti, userId, tokenExpiry, cancellationToken);
+    // Redis에 Refresh 토큰 등록(key: prefix + "refresh:" + refreshToken)
+    await RegisterRefreshTokenInRedisAsync(refreshToken, userId, refreshExpiry, cancellationToken);
 
         _logger.LogInformation("토큰 생성 완료: UserId {UserId}, JTI {Jti}", userId, jti);
 
@@ -89,8 +93,87 @@ public class TokenService : ITokenService
         {
             AccessToken = tokenString,
             Jti = jti,
-            ExpiresIn = (int)TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes).TotalSeconds
+            ExpiresIn = (int)TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes).TotalSeconds,
+            RefreshToken = refreshToken,
+            RefreshExpiresIn = (int)TimeSpan.FromDays(_jwtSettings.RefreshTokenExpirationDays).TotalSeconds
         };
+    }
+
+    public async Task<TokenResponseDto?> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var redisKey = GetRedisRefreshTokenKey(refreshToken);
+            var exists = await _redisClient.StringGetAsync(redisKey);
+            if (string.IsNullOrEmpty(exists))
+            {
+                _logger.LogWarning("Refresh token not found or expired: {RefreshToken}", refreshToken);
+                return null;
+            }
+            var tokenInfo = !string.IsNullOrEmpty(exists) ? JsonSerializer.Deserialize<RefreshTokenInfo>(exists) : null;
+            if (tokenInfo == null)
+            {
+                return null;
+            }
+
+            // 리플레이 탐지: 이미 revoked된 refresh token이 사용되면 사용자 전체의 refresh token을 무효화
+            if (tokenInfo.Revoked)
+            {
+                _logger.LogWarning("Refresh token reuse detected (replay) for user {UserId}, token {RefreshToken}", tokenInfo.UserId, refreshToken);
+                // 사용자 전체의 refresh 토큰 무효화
+                await RevokeAllRefreshTokensForUserAsync(tokenInfo.UserId, cancellationToken);
+                return null;
+            }
+
+            // 토큰 회전: 새 Access/Refresh 발급
+            var newTokens = await GenerateTokenAsync(tokenInfo.UserId, tokenInfo.ChannelId, cancellationToken);
+
+            // 기존 토큰을 revoked 상태로 표시하고 새 토큰 정보를 남김(재사용 탐지용)
+            try
+            {
+                tokenInfo.Revoked = true;
+                tokenInfo.ReplacedBy = newTokens.RefreshToken;
+                tokenInfo.RevokedAt = DateTime.UtcNow;
+
+                var ttl = tokenInfo.ExpiresAt - DateTime.UtcNow;
+                if (ttl <= TimeSpan.Zero)
+                {
+                    // 이미 만료된 토큰이면 바로 삭제
+                    await _redisClient.KeyDeleteAsync(redisKey);
+                }
+                else
+                {
+                    var json = JsonSerializer.Serialize(tokenInfo);
+                    await _redisClient.StringSetAsync(redisKey, json, ttl);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "기존 refresh 토큰의 revoked 표시 중 오류 발생: {RefreshToken}", refreshToken);
+            }
+
+            return newTokens;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Refresh token 처리 중 오류 발생");
+            return null;
+        }
+    }
+
+    public async Task<bool> RevokeRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var redisKey = GetRedisRefreshTokenKey(refreshToken);
+            var result = await _redisClient.KeyDeleteAsync(redisKey);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Refresh token 무효화 중 오류 발생");
+            return false;
+        }
     }
 
     public async Task<bool> ValidateTokenAsync(string token, CancellationToken cancellationToken = default)
@@ -115,7 +198,7 @@ public class TokenService : ITokenService
         }
     }
 
-    public async Task<long?> GetUserIdFromTokenAsync(string token, CancellationToken cancellationToken = default)
+    public Task<long?> GetUserIdFromTokenAsync(string token, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -124,15 +207,15 @@ public class TokenService : ITokenService
 
             if (long.TryParse(userIdClaim, out var userId))
             {
-                return userId;
+                return Task.FromResult<long?>(userId);
             }
 
-            return null;
+            return Task.FromResult<long?>(null);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "토큰에서 사용자 ID 추출 실패");
-            return null;
+            return Task.FromResult<long?>(null);
         }
     }
 
@@ -141,7 +224,7 @@ public class TokenService : ITokenService
         try
         {
             var redisKey = GetRedisTokenKey(jti);
-            var result = await _database.KeyDeleteAsync(redisKey);
+            var result = await _redisClient.KeyDeleteAsync(redisKey);
             
             if (result)
             {
@@ -166,7 +249,7 @@ public class TokenService : ITokenService
         try
         {
             var redisKey = GetRedisTokenKey(jti);
-            var exists = await _database.KeyExistsAsync(redisKey);
+            var exists = await _redisClient.KeyExistsAsync(redisKey);
             return exists;
         }
         catch (Exception ex)
@@ -192,13 +275,81 @@ public class TokenService : ITokenService
             var tokenJson = JsonSerializer.Serialize(tokenInfo);
             var ttl = expiry - DateTime.UtcNow;
 
-            await _database.StringSetAsync(redisKey, tokenJson, ttl);
+            await _redisClient.StringSetAsync(redisKey, tokenJson, ttl);
             _logger.LogDebug("Redis에 토큰 등록 완료: JTI {Jti}, TTL {TTL}초", jti, ttl.TotalSeconds);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Redis 토큰 등록 중 오류 발생: JTI {Jti}", jti);
             throw;
+        }
+    }
+
+    private async Task RegisterRefreshTokenInRedisAsync(string refreshToken, long userId, DateTime expiry, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var redisKey = GetRedisRefreshTokenKey(refreshToken);
+            var tokenInfo = new RefreshTokenInfo
+            {
+                UserId = userId,
+                ChannelId = 1,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = expiry
+            };
+
+            var json = JsonSerializer.Serialize(tokenInfo);
+            var ttl = expiry - DateTime.UtcNow;
+            await _redisClient.StringSetAsync(redisKey, json, ttl);
+            _logger.LogDebug("Redis에 Refresh 토큰 등록 완료: {Key}, TTL {TTL}초", redisKey, ttl.TotalSeconds);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Redis Refresh 토큰 등록 중 오류 발생");
+            throw;
+        }
+    }
+
+    private string GetRedisRefreshTokenKey(string refreshToken)
+    {
+        return $"{_redisSettings.TokenKeyPrefix}refresh:{refreshToken}";
+    }
+
+    private class RefreshTokenInfo
+    {
+        public long UserId { get; set; }
+        public long ChannelId { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime ExpiresAt { get; set; }
+        // Replay detection
+        public bool Revoked { get; set; }
+        public string? ReplacedBy { get; set; }
+        public DateTime? RevokedAt { get; set; }
+    }
+
+    // Revoke all refresh tokens for a user (used when a replay is detected)
+    private async Task RevokeAllRefreshTokensForUserAsync(long userId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Redis key pattern: prefix + "refresh:*" - scan and delete matching entries for the user
+            var pattern = $"{_redisSettings.TokenKeyPrefix}refresh:*";
+            var keys = await _redisClient.GetKeysAsync(pattern);
+            foreach (var key in keys)
+            {
+                var val = await _redisClient.StringGetAsync(key);
+                if (string.IsNullOrEmpty(val)) continue;
+                var info = JsonSerializer.Deserialize<RefreshTokenInfo>(val);
+                if (info != null && info.UserId == userId)
+                {
+                    await _redisClient.KeyDeleteAsync(key);
+                }
+            }
+            _logger.LogInformation("All refresh tokens revoked for user {UserId}", userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "사용자 전체 refresh 토큰 무효화 중 오류 발생: UserId {UserId}", userId);
         }
     }
 

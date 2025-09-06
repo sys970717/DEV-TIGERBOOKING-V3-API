@@ -48,7 +48,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsUnique()
             .HasFilter("is_deleted = false")
             .HasDatabaseName("uk_user_channel_email");
+    // Navigation을 명시적으로 무시하여 EF가 shadow FK(SocialAuthId)를 생성하지 않도록 함
+    // 논리적 관계는 도메인 레벨에서 관리하고, DB 물리적 FK는 생성하지 않음
+    builder.Ignore(e => e.SocialAuth);
 
-        // 관계 설정은 생략(논리적 관계만 사용, 물리 FK 미생성)
+    // 관계 설정은 생략(논리적 관계만 사용, 물리 FK 미생성)
     }
 }

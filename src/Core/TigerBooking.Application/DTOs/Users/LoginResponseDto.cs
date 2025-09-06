@@ -25,4 +25,14 @@ public class LoginResponseDto
     /// JWT ID (로그아웃/블랙리스트 관리용)
     /// </summary>
     public string Jti { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Refresh 토큰 (토큰 재발급용)
+    /// </summary>
+    public string? RefreshToken { get; set; }
+
+    /// <summary>
+    /// Refresh 토큰 만료 시간 (초)
+    /// </summary>
+    public int RefreshExpiresIn { get; set; }
 }

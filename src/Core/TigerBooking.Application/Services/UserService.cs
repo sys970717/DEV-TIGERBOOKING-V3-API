@@ -47,6 +47,18 @@ public class UserService : IUserService
         // 회원가입하려는 채널이 활성 상태인지 확인 (Channel 테이블에서 직접 확인하는 로직 필요)
         // TODO: Channel 존재 여부 및 활성화 상태 확인 로직 추가
 
+        // 성별 값 검증 (M/F만 허용)
+        string? gender = null;
+        if (!string.IsNullOrEmpty(request.Gender))
+        {
+            var genderValue = request.Gender.Trim().ToUpperInvariant();
+            if (genderValue != "M" && genderValue != "F")
+            {
+                throw new ArgumentException("성별은 'M'(남자), 'F'(여자)만 입력 가능합니다.");
+            }
+            gender = genderValue;
+        }
+
         // 비밀번호 해시 생성
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
@@ -63,13 +75,14 @@ public class UserService : IUserService
             Password = passwordHash,
             FamilyName = EncryptPII(request.FamilyName),
             GivenName = EncryptPII(request.GivenName),
-            Gender = !string.IsNullOrEmpty(request.Gender) ? EncryptPII(request.Gender) : null,
+            Gender = gender != null ? EncryptPII(gender) : null,
             Nickname = !string.IsNullOrEmpty(request.Nickname) ? EncryptPII(request.Nickname) : null,
             PhoneCountryCode = !string.IsNullOrEmpty(request.PhoneCountryCode) ? EncryptPII(request.PhoneCountryCode) : null,
             PhoneNumber = !string.IsNullOrEmpty(normalizedPhoneNumber) ? EncryptPII(normalizedPhoneNumber) : null,
             NationalityCode = !string.IsNullOrEmpty(request.NationalityCode) ? EncryptPII(request.NationalityCode) : null,
             Point = 0,
-            IsActive = true
+            IsActive = true,
+            SocialAuth = null // 로컬 계정이므로 null
         };
 
         var createdUser = await _userRepository.CreateAsync(user, cancellationToken);
@@ -125,7 +138,9 @@ public class UserService : IUserService
             AccessToken = tokenResponse.AccessToken,
             TokenType = "Bearer",
             ExpiresIn = tokenResponse.ExpiresIn,
-            Jti = tokenResponse.Jti
+            Jti = tokenResponse.Jti,
+            RefreshToken = tokenResponse.RefreshToken,
+            RefreshExpiresIn = tokenResponse.RefreshExpiresIn
         };
     }
 
@@ -158,6 +173,11 @@ public class UserService : IUserService
             Point = user.Point,
             IsActive = user.IsActive
         };
+    }
+
+    public async Task<TokenResponseDto?> RefreshAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        return await _tokenService.RefreshTokenAsync(refreshToken, cancellationToken);
     }
 
     public async Task<UserProfileDto> UpdateProfileAsync(long userId, RegisterRequestDto request, CancellationToken cancellationToken = default)

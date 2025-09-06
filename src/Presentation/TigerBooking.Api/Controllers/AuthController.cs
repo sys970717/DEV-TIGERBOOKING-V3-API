@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TigerBooking.Application.DTOs.Users;
+using TigerBooking.Application.DTOs.Common;
 using TigerBooking.Application.Interfaces;
 
 namespace TigerBooking.Api.Controllers;
@@ -30,7 +31,7 @@ public class AuthController : ControllerBase
     /// <param name="cancellationToken">취소 토큰</param>
     /// <returns>생성된 사용자 정보</returns>
     [HttpPost("register")]
-    public async Task<ActionResult<RegisterResponseDto>> Register(
+    public async Task<ActionResult<ApiResponse<RegisterResponseDto>>> Register(
         [FromBody] RegisterRequestDto request,
         CancellationToken cancellationToken)
     {
@@ -38,17 +39,20 @@ public class AuthController : ControllerBase
         {
             var result = await _userService.RegisterAsync(request, cancellationToken);
             _logger.LogInformation("사용자 회원가입 성공: {UserId}", result.Id);
-            return CreatedAtAction(nameof(Register), result);
+            var response = ApiResponse<RegisterResponseDto>.Ok(result);
+            return CreatedAtAction(nameof(Register), response);
         }
         catch (InvalidOperationException ex)
         {
             _logger.LogWarning("회원가입 실패: {Message}", ex.Message);
-            return BadRequest(new { message = ex.Message });
+            var err = new ErrorDetail { Code = "EMAIL_EXISTS", Message = ex.Message };
+            return BadRequest(ApiResponse<RegisterResponseDto>.Fail(err));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "회원가입 중 오류 발생");
-            return StatusCode(500, new { message = "서버 오류가 발생했습니다." });
+            var err = new ErrorDetail { Code = "UNHANDLED_ERROR", Message = "서버 오류가 발생했습니다." };
+            return StatusCode(500, ApiResponse<RegisterResponseDto>.Fail(err));
         }
     }
 
@@ -59,7 +63,7 @@ public class AuthController : ControllerBase
     /// <param name="cancellationToken">취소 토큰</param>
     /// <returns>JWT 토큰 정보</returns>
     [HttpPost("login")]
-    public async Task<ActionResult<LoginResponseDto>> Login(
+    public async Task<ActionResult<ApiResponse<LoginResponseDto>>> Login(
         [FromBody] LoginRequestDto request,
         CancellationToken cancellationToken)
     {
@@ -67,17 +71,46 @@ public class AuthController : ControllerBase
         {
             var result = await _userService.LoginAsync(request, cancellationToken);
             _logger.LogInformation("사용자 로그인 성공: {Email}", request.Email);
-            return Ok(result);
+            return Ok(ApiResponse<LoginResponseDto>.Ok(result));
         }
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning("로그인 실패: {Email}, {Message}", request.Email, ex.Message);
-            return Unauthorized(new { message = ex.Message });
+            var err = new ErrorDetail { Code = "UNAUTHORIZED", Message = ex.Message };
+            return Unauthorized(ApiResponse<LoginResponseDto>.Fail(err));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "로그인 중 오류 발생: {Email}", request.Email);
-            return StatusCode(500, new { message = "서버 오류가 발생했습니다." });
+            var err = new ErrorDetail { Code = "UNHANDLED_ERROR", Message = "서버 오류가 발생했습니다." };
+            return StatusCode(500, ApiResponse<LoginResponseDto>.Fail(err));
+        }
+    }
+
+    /// <summary>
+    /// Refresh token으로 새로운 access/refresh 토큰을 발급
+    /// </summary>
+    [HttpPost("refresh")]
+    public async Task<ActionResult<ApiResponse<TokenResponseDto>>> Refresh([
+        FromBody] TigerBooking.Application.DTOs.Users.RefreshRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var tokenResp = await _userService.RefreshAsync(request.RefreshToken, cancellationToken);
+            if (tokenResp == null)
+            {
+                var err = new ErrorDetail { Code = "INVALID_REFRESH", Message = "Refresh token이 유효하지 않습니다." };
+                return Unauthorized(ApiResponse<TokenResponseDto>.Fail(err));
+            }
+
+            return Ok(ApiResponse<TokenResponseDto>.Ok(tokenResp));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Refresh 처리 중 오류 발생");
+            var err = new ErrorDetail { Code = "UNHANDLED_ERROR", Message = "서버 오류가 발생했습니다." };
+            return StatusCode(500, ApiResponse<TokenResponseDto>.Fail(err));
         }
     }
 
@@ -89,7 +122,7 @@ public class AuthController : ControllerBase
     /// <returns>로그아웃 결과</returns>
     [HttpPost("logout")]
     [Authorize]
-    public async Task<ActionResult> Logout(CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<object>>> Logout(CancellationToken cancellationToken)
     {
         try
         {
@@ -97,24 +130,27 @@ public class AuthController : ControllerBase
             var jti = User.FindFirst("jti")?.Value;
             if (string.IsNullOrEmpty(jti))
             {
-                return BadRequest(new { message = "유효하지 않은 토큰입니다." });
+                var err = new ErrorDetail { Code = "INVALID_TOKEN", Message = "유효하지 않은 토큰입니다." };
+                return BadRequest(ApiResponse<object>.Fail(err));
             }
 
             var result = await _userService.LogoutAsync(jti, cancellationToken);
             if (result)
             {
                 _logger.LogInformation("사용자 로그아웃 성공: JTI {Jti}", jti);
-                return Ok(new { ok = true });
+                return Ok(ApiResponse<object>.Ok(new { ok = true }));
             }
             else
             {
-                return BadRequest(new { message = "로그아웃에 실패했습니다." });
+                var err = new ErrorDetail { Code = "LOGOUT_FAILED", Message = "로그아웃에 실패했습니다." };
+                return BadRequest(ApiResponse<object>.Fail(err));
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "로그아웃 중 오류 발생");
-            return StatusCode(500, new { message = "서버 오류가 발생했습니다." });
+            var err = new ErrorDetail { Code = "UNHANDLED_ERROR", Message = "서버 오류가 발생했습니다." };
+            return StatusCode(500, ApiResponse<object>.Fail(err));
         }
     }
 }
